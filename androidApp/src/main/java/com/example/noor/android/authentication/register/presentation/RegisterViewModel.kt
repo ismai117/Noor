@@ -34,8 +34,6 @@ class RegisterViewModel(
 
     val isLoading = mutableStateOf(false)
 
-    val  name = ""
-
     fun onEvent(event: RegistrationEvent) {
         when (event) {
             is RegistrationEvent.UsernameChanged -> {
@@ -92,3 +90,5 @@ class RegisterViewModel(
 
 
 }
+
+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
