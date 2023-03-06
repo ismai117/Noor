@@ -14,6 +14,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -44,10 +45,11 @@ import com.example.noor.android.R
 import com.example.noor.android.authentication.register.presentation.RegistrationEvent
 import com.example.noor.android.main.components.TopBar
 import com.example.noor.android.navigation.screens.auth.AuthScreens
+import com.example.noor.authentication.utils.AuthServiceResult
 import org.koin.androidx.compose.koinViewModel
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ForgotPasswordScreen(
     modifier: Modifier = Modifier,
@@ -59,6 +61,20 @@ fun ForgotPasswordScreen(
     val hideSoftwareKeyboardController = LocalSoftwareKeyboardController.current
 
     val state = forgetPasswordViewModel.state
+
+    LaunchedEffect(forgetPasswordViewModel) {
+        forgetPasswordViewModel.forgetPasswordState.collect { result ->
+            when (result) {
+                is AuthServiceResult.Success -> {
+                    navController.navigate(AuthScreens.LoginScreen.route)
+                }
+                is AuthServiceResult.Failure -> {
+                    scaffoldState.snackbarHostState.showSnackbar("There is no user record corresponding to this email.")
+                }
+                else -> {}
+            }
+        }
+    }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -119,7 +135,10 @@ fun ForgotPasswordScreen(
                         forgetPasswordViewModel.onEvent(ForgetPasswordEvent.EmailChanged(it))
                     },
                     label = {
-                        Text(text = "Email")
+                        Text(
+                            text = "Email",
+                            color = Color.Black
+                        )
                     },
                     modifier = modifier
                         .width(331.dp)
@@ -131,7 +150,13 @@ fun ForgotPasswordScreen(
                     ),
                     keyboardActions = KeyboardActions(onDone = {
                         hideSoftwareKeyboardController?.hide()
-                    })
+                    }),
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        cursorColor = Color.Black
+                    ),
+                    singleLine = true
                 )
                 if (state.emailError?.isNotBlank() == true) {
                     Box(
@@ -156,9 +181,18 @@ fun ForgotPasswordScreen(
                         contentColor = Color(0xFF000000),
                     )
                 ) {
-                    Text(
-                        text = "Submit"
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Submit"
+                        )
+                        if(state.isLoading) {
+                            Spacer(modifier = modifier.padding(4.dp))
+                            CircularProgressIndicator(strokeWidth = 2.dp, color = Color.White, modifier = modifier.size(24.dp))
+                        }
+                    }
                 }
             }
         }

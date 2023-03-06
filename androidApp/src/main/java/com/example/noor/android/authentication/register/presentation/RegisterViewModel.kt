@@ -12,6 +12,7 @@ import com.example.noor.android.authentication.utils.*
 import com.example.noor.authentication.utils.AuthServiceResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -31,8 +32,6 @@ class RegisterViewModel(
 
     private val _registerState = MutableStateFlow<AuthServiceResult<Unit>?>(null)
     val registerState =_registerState.asStateFlow()
-
-    val isLoading = mutableStateOf(false)
 
     fun onEvent(event: RegistrationEvent) {
         when (event) {
@@ -79,11 +78,14 @@ class RegisterViewModel(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-             authRepository.signUp(
+            authRepository.signUp(
                 state.email,
                 state.password
             ).collect {
-                _registerState.emit(it)
+                state = state.copy(isLoading = true)
+                delay(2000)
+                _registerState.value = it
+                state = state.copy(isLoading = false)
             }
         }
     }
@@ -91,4 +93,3 @@ class RegisterViewModel(
 
 }
 
-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

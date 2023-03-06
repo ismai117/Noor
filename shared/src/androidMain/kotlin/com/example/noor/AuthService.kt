@@ -15,8 +15,31 @@ import kotlinx.coroutines.tasks.await
 
 
 class AuthService(
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
 ) : AuthRepository {
+
+    override suspend fun signIn(
+        email: String,
+        password: String,
+    ): Flow<AuthServiceResult<Unit>> = callbackFlow {
+        try {
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d("authService", "login: success")
+                        trySend(AuthServiceResult.Success())
+                    } else {
+                        Log.d("authService", "login: failed")
+                        trySend(AuthServiceResult.Failure(task.exception?.message))
+                    }
+                }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        awaitClose {
+            cancel()
+        }
+    }
 
     override suspend fun signUp(
         email: String,
@@ -26,14 +49,35 @@ class AuthService(
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        Log.d("authService", "${task.result.user?.uid}")
-                        trySend(AuthServiceResult.Success(task.result.user?.uid))
+                        Log.d("authService", "register: success")
+                        trySend(AuthServiceResult.Success())
                     } else {
-                        Log.d("authService", "${task.exception?.message}")
-                        trySend(AuthServiceResult.Failure(task.exception?.message))
+                        Log.d("authService", "register: failed")
+                        trySend(AuthServiceResult.Failure())
                     }
                 }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        awaitClose {
+            cancel()
+        }
+    }
 
+    override suspend fun forgetPassword(
+        email: String,
+    ): Flow<AuthServiceResult<Unit>> = callbackFlow {
+        try {
+            auth.sendPasswordResetEmail(email)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d("authService", "forgetPassword: success")
+                        trySend(AuthServiceResult.Success())
+                    } else {
+                        Log.d("authService", "forgetPassword: ${task.exception?.message}")
+                        trySend(AuthServiceResult.Failure())
+                    }
+                }
         } catch (e: Exception) {
             e.printStackTrace()
         }

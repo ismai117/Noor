@@ -1,6 +1,7 @@
 package com.example.noor.android.authentication.register.presentation
 
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -42,12 +43,12 @@ import com.example.noor.authentication.utils.AuthServiceResult
 import org.koin.androidx.compose.koinViewModel
 
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RegisterScreen(
     modifier: Modifier = Modifier,
     registerViewModel: RegisterViewModel = koinViewModel(),
-    navController: NavController,
+    navController: NavController
 ) {
     val scaffoldState = rememberScaffoldState()
     val scrollState = rememberScrollState()
@@ -55,19 +56,17 @@ fun RegisterScreen(
 
     val state = registerViewModel.state
 
-    val isLoading = registerViewModel.isLoading.value
-
-    val result = registerViewModel.registerState.collectAsState().value
-
     LaunchedEffect(registerViewModel) {
-        when (result) {
-            is AuthServiceResult.Failure -> {
-                scaffoldState.snackbarHostState.showSnackbar("${result.message}")
+        registerViewModel.registerState.collect { result ->
+            when (result) {
+                is AuthServiceResult.Success -> {
+                    navController.navigate(AuthScreens.LoginScreen.route)
+                }
+                is AuthServiceResult.Failure -> {
+                    scaffoldState.snackbarHostState.showSnackbar("The email address is already in use by another account.")
+                }
+                else -> {}
             }
-            is AuthServiceResult.Success -> {
-                scaffoldState.snackbarHostState.showSnackbar("${result.UID}")
-            }
-            else -> {}
         }
     }
 
@@ -136,7 +135,10 @@ fun RegisterScreen(
                             registerViewModel.onEvent(RegistrationEvent.UsernameChanged(it))
                         },
                         label = {
-                            Text(text = "Username")
+                            Text(
+                                text = "Username",
+                                color = Color.Black
+                            )
                         },
                         modifier = modifier
                             .width(331.dp)
@@ -148,7 +150,13 @@ fun RegisterScreen(
                         ),
                         keyboardActions = KeyboardActions(onDone = {
                             hideSoftwareKeyboardController?.hide()
-                        })
+                        }),
+                        colors = TextFieldDefaults.textFieldColors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = Color.Black
+                        ),
+                        singleLine = true
                     )
                     if (state.usernameError?.isNotBlank() == true) {
                         Box(
@@ -167,7 +175,10 @@ fun RegisterScreen(
                             registerViewModel.onEvent(RegistrationEvent.EmailChanged(it))
                         },
                         label = {
-                            Text(text = "Email")
+                            Text(
+                                text = "Email",
+                                color = Color.Black
+                            )
                         },
                         modifier = modifier
                             .width(331.dp)
@@ -179,7 +190,13 @@ fun RegisterScreen(
                         ),
                         keyboardActions = KeyboardActions(onDone = {
                             hideSoftwareKeyboardController?.hide()
-                        })
+                        }),
+                        colors = TextFieldDefaults.textFieldColors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = Color.Black
+                        ),
+                        singleLine = true
                     )
                     if (state.emailError?.isNotBlank() == true) {
                         Box(
@@ -198,7 +215,10 @@ fun RegisterScreen(
                             registerViewModel.onEvent(RegistrationEvent.PasswordChanged(it))
                         },
                         label = {
-                            Text(text = "Password")
+                            Text(
+                                text = "Password",
+                                color = Color.Black
+                            )
                         },
                         modifier = modifier
                             .width(331.dp)
@@ -210,7 +230,13 @@ fun RegisterScreen(
                         ),
                         keyboardActions = KeyboardActions(onDone = {
                             hideSoftwareKeyboardController?.hide()
-                        })
+                        }),
+                        colors = TextFieldDefaults.textFieldColors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = Color.Black
+                        ),
+                        singleLine = true
                     )
                     if (
                         state.passwordError?.isNotBlank() == true
@@ -231,7 +257,10 @@ fun RegisterScreen(
                             registerViewModel.onEvent(RegistrationEvent.RepeatedPasswordChanged(it))
                         },
                         label = {
-                            Text(text = "Confirm Password")
+                            Text(
+                                text = "Confirm Password",
+                                color = Color.Black
+                            )
                         },
                         modifier = modifier
                             .width(331.dp)
@@ -243,7 +272,13 @@ fun RegisterScreen(
                         ),
                         keyboardActions = KeyboardActions(onDone = {
                             hideSoftwareKeyboardController?.hide()
-                        })
+                        }),
+                        colors = TextFieldDefaults.textFieldColors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = Color.Black
+                        ),
+                        singleLine = true
                     )
                     if (state.repeatPasswordError?.isNotBlank() == true) {
                         Box(
@@ -268,9 +303,110 @@ fun RegisterScreen(
                             contentColor = Color(0xFF000000),
                         )
                     ) {
-                        Text(
-                            text = "Register"
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "Register"
+                            )
+                            if(state.isLoading) {
+                                Spacer(modifier = modifier.padding(4.dp))
+                                CircularProgressIndicator(strokeWidth = 2.dp, color = Color.White, modifier = modifier.size(24.dp))
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = modifier.width(331.dp).padding(top = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Divider(
+                            color = Color.White,
+                            thickness = 2.dp,
+                            modifier = modifier.width(40.dp)
                         )
+                        Text(
+                            text = "Or Register with",
+                            color = Color.White,
+                            modifier = modifier.padding(start = 6.dp, end = 6.dp)
+                        )
+                        Divider(
+                            color = Color.White,
+                            thickness = 2.dp,
+                            modifier = modifier.width(40.dp)
+                        )
+                    }
+                    Row(
+                        modifier = modifier.width(331.dp).padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = {
+
+                            },
+                            modifier = modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color(0xFFFFFFFF)
+                            )
+                        ) {
+                            Box(
+                                modifier = modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.facebook_icon),
+                                    contentDescription = "",
+                                    modifier = modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = {
+
+                            },
+                            modifier = modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color(0xFFFFFFFF)
+                            )
+                        ) {
+                            Box(
+                                modifier = modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.google_icon),
+                                    contentDescription = "",
+                                    modifier = modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Button(
+                            onClick = {
+
+                            },
+                            modifier = modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color(0xFFFFFFFF)
+                            )
+                        ) {
+                            Box(
+                                modifier = modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.apple_icon),
+                                    contentDescription = "",
+                                    modifier = modifier.size(24.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -307,7 +443,6 @@ fun RegisterScreen(
                 }
 
             }
-            LoadingBar(isLoading = isLoading)
         }
     }
 }

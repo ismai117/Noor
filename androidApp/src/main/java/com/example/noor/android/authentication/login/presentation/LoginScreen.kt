@@ -3,6 +3,7 @@ package com.example.noor.android.authentication.login.presentation
 
 import android.inputmethodservice.Keyboard
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -47,6 +49,7 @@ import com.example.noor.android.authentication.register.presentation.Registratio
 import com.example.noor.android.main.components.LoadingBar
 import com.example.noor.android.main.components.TopBar
 import com.example.noor.android.navigation.screens.auth.AuthScreens
+import com.example.noor.authentication.utils.AuthServiceResult
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -65,7 +68,19 @@ fun LogdinScreen(
 
     val state = loginViewModel.state
 
-    val isLoading = loginViewModel.isLoading.value
+    LaunchedEffect(loginViewModel) {
+        loginViewModel.loginState.collect { result ->
+            when (result) {
+                is AuthServiceResult.Success -> {
+                    signIn()
+                }
+                is AuthServiceResult.Failure -> {
+                    scaffoldState.snackbarHostState.showSnackbar("There is no user record corresponding to this email.")
+                }
+                else -> {}
+            }
+        }
+    }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -132,7 +147,10 @@ fun LogdinScreen(
                             loginViewModel.onEvent(LoginEvent.EmailChanged(it))
                         },
                         label = {
-                            Text(text = "Email")
+                            Text(
+                                text = "Email",
+                                color = Color.Black
+                            )
                         },
                         modifier = modifier
                             .width(331.dp)
@@ -144,7 +162,13 @@ fun LogdinScreen(
                         ),
                         keyboardActions = KeyboardActions(onDone = {
                             hideSoftwareKeyboardController?.hide()
-                        })
+                        }),
+                        colors = TextFieldDefaults.textFieldColors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = Color.Black
+                        ),
+                        singleLine = true
                     )
                     if (state.emailError?.isNotBlank() == true) {
                         Box(
@@ -162,7 +186,10 @@ fun LogdinScreen(
                             loginViewModel.onEvent(LoginEvent.PasswordChanged(it))
                         },
                         label = {
-                            Text(text = "Password")
+                            Text(
+                                text = "Password",
+                                color = Color.Black
+                            )
                         },
                         modifier = modifier
                             .width(331.dp)
@@ -174,7 +201,13 @@ fun LogdinScreen(
                         ),
                         keyboardActions = KeyboardActions(onDone = {
                             hideSoftwareKeyboardController?.hide()
-                        })
+                        }),
+                        colors = TextFieldDefaults.textFieldColors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = Color.Black
+                        ),
+                        singleLine = true
                     )
                     if (state.passwordError?.isNotBlank() == true) {
                         Box(
@@ -211,12 +244,21 @@ fun LogdinScreen(
                             contentColor = Color(0xFF000000),
                         )
                     ) {
-                        Text(
-                            text = "Login"
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "Login"
+                            )
+                            if(state.isLoading) {
+                                Spacer(modifier = modifier.padding(4.dp))
+                                CircularProgressIndicator(strokeWidth = 2.dp, color = Color.White, modifier = modifier.size(24.dp))
+                            }
+                        }
                     }
                     Row(
-                        modifier = modifier.width(331.dp),
+                        modifier = modifier.width(331.dp).padding(top = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -226,7 +268,7 @@ fun LogdinScreen(
                             modifier = modifier.width(40.dp)
                         )
                         Text(
-                            text = "or",
+                            text = "Or Login with",
                             color = Color.White,
                             modifier = modifier.padding(start = 6.dp, end = 6.dp)
                         )
@@ -236,101 +278,73 @@ fun LogdinScreen(
                             modifier = modifier.width(40.dp)
                         )
                     }
-                    Button(
-                        onClick = {
-
-                        },
-                        modifier = modifier
-                            .width(331.dp)
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color(0xFFFFD300),
-                            contentColor = Color(0xFF000000),
-                        )
+                    Row(
+                        modifier = modifier.width(331.dp).padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Box(
-                            modifier = modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                modifier = modifier.wrapContentSize(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.google_icon),
-                                    contentDescription = "",
-                                    modifier = modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = "Sign in with Google",
-                                    modifier = modifier
-                                        .width(170.dp)
-                                )
-                            }
-                        }
-                    }
-                    Button(
-                        onClick = {
+                        Button(
+                            onClick = {
 
-                        },
-                        modifier = modifier
-                            .width(331.dp)
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color(0xFFFFD300),
-                            contentColor = Color(0xFF000000),
-                        )
-                    ) {
-                        Box(
-                            modifier = modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            },
+                            modifier = modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color(0xFFFFFFFF)
+                            )
                         ) {
-                            Row(
-                                modifier = modifier.wrapContentSize(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            Box(
+                                modifier = modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.facebook_icon),
                                     contentDescription = "",
                                     modifier = modifier.size(24.dp)
                                 )
-                                Text(
-                                    text = "Sign in with Facebook",
-                                    modifier = modifier
-                                        .width(170.dp)
+                            }
+                        }
+                        Button(
+                            onClick = {
+
+                            },
+                            modifier = modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color(0xFFFFFFFF)
+                            )
+                        ) {
+                            Box(
+                                modifier = modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.google_icon),
+                                    contentDescription = "",
+                                    modifier = modifier.size(24.dp)
                                 )
                             }
                         }
-                    }
-                    Button(
-                        onClick = {
+                        Button(
+                            onClick = {
 
-                        },
-                        modifier = modifier
-                            .width(331.dp)
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color(0xFFFFD300),
-                            contentColor = Color(0xFF000000),
-                        ),
-                    ) {
-                        Box(
-                            modifier = modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            },
+                            modifier = modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color(0xFFFFFFFF)
+                            )
                         ) {
-                            Row(
-                                modifier = modifier.wrapContentSize(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            Box(
+                                modifier = modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.apple_icon),
                                     contentDescription = "",
                                     modifier = modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = "Sign in with Apple",
-                                    modifier = modifier
-                                        .width(170.dp)
                                 )
                             }
                         }
@@ -369,7 +383,6 @@ fun LogdinScreen(
                 }
             }
         }
-        LoadingBar(isLoading = isLoading)
     }
 
 }

@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import com.example.noor.android.R
 import com.example.noor.android.authentication.login.presentation.LoginViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
@@ -29,11 +30,11 @@ fun SplashScreen(
     home: () -> Unit,
 ) {
 
-    val loginState = loginViewModel.loginState.collectAsState().value
+    val isLoggedIn = FirebaseAuth.getInstance().currentUser
 
     LaunchedEffect(key1 = Unit) {
         delay(2000)
-        if (loginState) {
+        if (isLoggedIn != null) {
             home()
         } else {
             login()

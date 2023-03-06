@@ -4,6 +4,7 @@ package com.example.noor.android.main.discover
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.navigation.NavController
 import com.example.noor.android.R
 import com.example.noor.android.main.components.TopBar
 import com.example.noor.android.navigation.screens.main.MainScreens
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable

@@ -7,40 +7,45 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.noor.AuthService
 import com.example.noor.android.authentication.forgetPassword.domain.ForgetPasswordRepository
 import com.example.noor.android.authentication.register.presentation.RegistrationEvent
 import com.example.noor.android.authentication.utils.ValidateEmail
 import com.example.noor.android.authentication.utils.ValidationResult
+import com.example.noor.authentication.domain.AuthRepository
+import com.example.noor.authentication.utils.AuthServiceResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 
 class ForgetPasswordViewModel(
+    private val authRepository: AuthService,
     private val forgetPasswordRepository: ForgetPasswordRepository,
     private val validateEmail: ValidateEmail,
 ) : ViewModel() {
 
     var state by mutableStateOf(ForgetPasswordState())
 
-    private val validationEventChannel = Channel<ValidationResult>()
-    val validateEvents = validationEventChannel.receiveAsFlow()
-
-    val isLoading = mutableStateOf(false)
+    private val _forgetPasswordState = MutableStateFlow<AuthServiceResult<Unit>?>(null)
+    val forgetPasswordState = _forgetPasswordState.asStateFlow()
 
     fun onEvent(event: ForgetPasswordEvent){
         when(event){
-            is  ForgetPasswordEvent.EmailChanged -> {
+            is ForgetPasswordEvent.EmailChanged -> {
                 state = state.copy(email = event.email)
             }
-            is  ForgetPasswordEvent.Submit -> {
+            is ForgetPasswordEvent.Submit -> {
                 submit()
             }
         }
     }
 
     private fun submit() {
-
 
         val emailResult = validateEmail.execute(state.email)
 
@@ -51,10 +56,16 @@ class ForgetPasswordViewModel(
             return
         }
 
-        viewModelScope.launch {
-            validationEventChannel.send(ValidationResult.Successful(""))
+        viewModelScope.launch(Dispatchers.IO) {
+            authRepository.forgetPassword(
+                state.email
+            ).collect {
+                state = state.copy(isLoading = true)
+                delay(2000)
+                _forgetPasswordState.value = it
+                state = state.copy(isLoading = false)
+            }
         }
-
     }
 
 }

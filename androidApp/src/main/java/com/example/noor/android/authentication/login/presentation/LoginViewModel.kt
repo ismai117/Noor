@@ -5,10 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.noor.AuthService
 import com.example.noor.android.authentication.login.domain.LoginRepository
 import com.example.noor.android.authentication.utils.ValidateEmail
 import com.example.noor.android.authentication.utils.ValidatePassword
 import com.example.noor.android.authentication.utils.ValidationResult
+import com.example.noor.authentication.utils.AuthServiceResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -19,38 +21,16 @@ import kotlinx.coroutines.launch
 
 
 class LoginViewModel(
+    private val authRepository: AuthService,
     private val loginRepository: LoginRepository,
     private val validateEmail: ValidateEmail,
     private val validatePassword: ValidatePassword
 ) : ViewModel() {
 
-    private val _loginState = MutableStateFlow(false)
-    val loginState = _loginState.asStateFlow()
-
     var state by mutableStateOf(LoginState())
 
-    private val validationEventChannel = Channel<ValidationResult>()
-    val validateEvents = validationEventChannel.receiveAsFlow()
-
-    val isLoading = mutableStateOf(false)
-
-    init {
-        getLoginState()
-    }
-
-    private fun getLoginState(){
-        viewModelScope.launch(Dispatchers.IO) {
-            loginRepository.getLoginState().collect{
-                _loginState.value = it
-            }
-        }
-    }
-
-    fun setLoginState(state: Boolean){
-        viewModelScope.launch(Dispatchers.IO) {
-            loginRepository.setLoginState(state)
-        }
-    }
+    private val _loginState = MutableStateFlow<AuthServiceResult<Unit>?>(null)
+    val loginState =_loginState .asStateFlow()
 
     fun onEvent(event: LoginEvent){
         when(event){
@@ -85,9 +65,16 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            validationEventChannel.send(ValidationResult.Successful(""))
+            authRepository.signIn(
+                state.email,
+                state.password
+            ).collect {
+                state = state.copy(isLoading = true)
+                delay(2000)
+                _loginState.value = it
+                state = state.copy(isLoading = false)
+            }
         }
-
     }
 
 }
